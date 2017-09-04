@@ -1,9 +1,11 @@
 """Here is a class for execution strategies
 """
 
-import os
+import time
 import requests
+import traceback
 from jira import JIRA
+import makelog
 
 
 class Strategy:
@@ -13,6 +15,7 @@ class Strategy:
         self._password = user_password
         self._server = 'https://{}.atlassian.net'.format(self._account)
         self._jira_connection = JIRA(server=self._server, basic_auth=(self._user, self._password))
+        self._makelog = makelog.Makelog('output', 'errorlog')
 
     def execute(self, key):
         if key == 1:
@@ -48,7 +51,9 @@ class Strategy:
                 comps = self._jira_connection.project_components(project)
                 components_all.update(comps)
             except:
-                print "Unexpected error with getting components from project: {}".format(project.key)
+                outstr = "Unexpected error with getting components from project: {}".format(project.key)
+                self._makelog.putto_console(outstr)
+                self._makelog.putto_errorlog(outstr, traceback.format_exc())
 
         for comp in components_all:
             try:
@@ -63,7 +68,9 @@ class Strategy:
                 if hasattr(component_data, 'lead'):
                     data_peruser[component_data.lead.name]['components'].add(component_data.id)
             except:
-                print "Unexpected error with getting data of component id: {}".format(comp.id)
+                outstr = "Unexpected error with getting data of component id: {}".format(comp.id)
+                self._makelog.putto_console(outstr)
+                self._makelog.putto_errorlog(outstr, traceback.format_exc())
 
         # counting hours logic
         issues_all = self._jira_connection.search_issues('', maxResults=False)
@@ -85,7 +92,9 @@ class Strategy:
                                 data_percomponent[comp.id]['time_perissue'][iss.key] = 0
                             data_percomponent[comp.id]['time_perissue'][iss.key] += work.timeSpentSeconds
             except:
-                print "Unexpected error counting hours with issue: {}".format(iss.key)
+                outstr = "Unexpected error counting hours with issue: {}".format(iss.key)
+                self._makelog.putto_console(outstr)
+                self._makelog.putto_errorlog(outstr, traceback.format_exc())
 
         # outputting data
         outstr = ""
@@ -111,10 +120,9 @@ class Strategy:
 
             outstr += "\n"
 
-        outstr += "\n-----> END REPORT <-----"
-
-        os.system('cls' if os.name == 'nt' else 'clear')
-        print outstr
+        outstr += "\n-----> END REPORT <-----\n\n"
+        self._makelog.putto_console(outstr, iscln=True)
+        self._makelog.putto_file(outstr)
 
     def _domailing(self):
         issues_tonotify = []
@@ -130,7 +138,9 @@ class Strategy:
                                                 'isskey':   iss.key
                                             })
             except:
-                print "Unexpected error with getting issue: {}".format(iss.key)
+                outstr = "Unexpected error with getting issue: {}".format(iss.key)
+                self._makelog.putto_console(outstr)
+                self._makelog.putto_errorlog(outstr, traceback.format_exc())
 
         for data in issues_tonotify:
             try:
@@ -143,12 +153,16 @@ class Strategy:
                             }
 
                 requests.post(url, auth=(self._user, self._password), json=notify_data)
-                print "Successfully sending notification to:\n-> {} {} about incomplete fields in {} issue".format(data['dispname'], data['email'], data['isskey'])
+                outstr = "Successfully sending notification to:\n-> {} {} about incomplete fields in {} issue".format(data['dispname'], data['email'], data['isskey'])
+                self._makelog.putto_console(outstr)
+                self._makelog.putto_file(outstr)
             except:
-                print "Unexpected error with sending notification to:\n-> {} {} about: {}".format(data['dispname'], data['email'], data['isskey'])
+                outstr = "Unexpected error with sending notification to:\n-> {} {} about: {}".format(data['dispname'], data['email'], data['isskey'])
+                self._makelog.putto_console(outstr)
+                self._makelog.putto_errorlog(outstr, traceback.format_exc())
 
         if len(issues_tonotify) == 0:
-            print "All issues were filed in correct"
+            self._makelog.putto_console("All tested issues were filed in correct")
 
     def _dogenerating(self):
         pass
@@ -164,3 +178,9 @@ class Strategy:
         # issue = authed_jira.issue('PROJKEY1-1')
         # print issue.fields.summary
         # print issue.fields.description
+
+        # add_user(username, email, directoryId=1, password=None, fullname=None, notify=False, active=True, ignore_existing=False)
+        # create_project(key, name=None, assignee=None, type='Software', template_name=None)
+        # create_component(name, project, description=None, leadUserName=None, assigneeType=None, isAssigneeTypeValid=False)
+        # create_issue(fields=None, prefetch=True, **fieldargs)
+        # add_worklog(issue, timeSpent=None, timeSpentSeconds=None, adjustEstimate=None, newEstimate=None, reduceBy=None, comment=None, started=None, user=None)
