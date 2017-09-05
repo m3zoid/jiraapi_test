@@ -52,7 +52,7 @@ class Strategy:
                 comps = self._jira_connection.project_components(project)
                 components_all.update(comps)
             except:
-                outstr = "Unexpected error with getting components from project: {}".format(project.key)
+                outstr = "Unexpected error with getting components from project: {}\n".format(project.key)
                 self._makelog.putto_console(outstr)
                 self._makelog.putto_errorlog(outstr, traceback.format_exc())
 
@@ -69,7 +69,7 @@ class Strategy:
                 if hasattr(component_data, 'lead'):
                     data_peruser[component_data.lead.name]['components'].add(component_data.id)
             except:
-                outstr = "Unexpected error with getting data of component id: {}".format(comp.id)
+                outstr = "Unexpected error with getting data of component id: {}\n".format(comp.id)
                 self._makelog.putto_console(outstr)
                 self._makelog.putto_errorlog(outstr, traceback.format_exc())
 
@@ -93,7 +93,7 @@ class Strategy:
                                 data_percomponent[comp.id]['time_perissue'][iss.key] = 0
                             data_percomponent[comp.id]['time_perissue'][iss.key] += work.timeSpentSeconds
             except:
-                outstr = "Unexpected error counting hours with issue: {}".format(iss.key)
+                outstr = "Unexpected error counting hours with issue: {}\n".format(iss.key)
                 self._makelog.putto_console(outstr)
                 self._makelog.putto_errorlog(outstr, traceback.format_exc())
 
@@ -139,7 +139,7 @@ class Strategy:
                                                 'isskey':   iss.key
                                             })
             except:
-                outstr = "Unexpected error with getting issue: {}".format(iss.key)
+                outstr = "Unexpected error with getting issue: {}\n".format(iss.key)
                 self._makelog.putto_console(outstr)
                 self._makelog.putto_errorlog(outstr, traceback.format_exc())
 
@@ -154,11 +154,11 @@ class Strategy:
                             }
 
                 requests.post(url, auth=(self._user, self._password), json=notify_data)
-                outstr = "Successfully sending notification to:\n-> {} {} about incomplete fields in {} issue".format(data['dispname'], data['email'], data['isskey'])
+                outstr = "Successfully sending notification to:\n-> {} {} about incomplete fields in {} issue\n".format(data['dispname'], data['email'], data['isskey'])
                 self._makelog.putto_console(outstr)
                 self._makelog.putto_file(outstr)
             except:
-                outstr = "Unexpected error with sending notification to:\n-> {} {} about: {}".format(data['dispname'], data['email'], data['isskey'])
+                outstr = "Unexpected error with sending notification to:\n-> {} {} about: {}\n".format(data['dispname'], data['email'], data['isskey'])
                 self._makelog.putto_console(outstr)
                 self._makelog.putto_errorlog(outstr, traceback.format_exc())
 
