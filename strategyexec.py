@@ -2,10 +2,13 @@
 """
 
 import time
+import string
+import random
 import requests
 import traceback
 from jira import JIRA
 import makelog
+import namebase
 
 
 class Strategy:
@@ -24,8 +27,6 @@ class Strategy:
             self._domailing()
         elif key == 3:
             self._dogenerating()
-        elif key == 4:
-            self._dotesting()
         else:
             return False
 
@@ -165,22 +166,109 @@ class Strategy:
             self._makelog.putto_console("All tested issues were filed in correct")
 
     def _dogenerating(self):
-        pass
+        names_base = namebase.Namebase()
+        maxlen_projname = 10
+        content_count = {
+                            'project': 10,
+                            'user': 10,
+                            'component': 20,
+                            'issue': 100
+                        }
 
-    def _dotesting(self):
-        pass
+        # making projects
+        for i in xrange(content_count['project']):
+            newname = names_base.getname_project()
+            parts = newname.split()[::2]
+            newkey = string.join((parts[0][:(maxlen_projname - len(parts[1]))], parts[1]), '')
+            try:
+                self._jira_connection.create_project(newkey, name=newname)
+                outstr = "Project {} was successfully created".format(newkey)
+                self._makelog.putto_console(outstr)
+                self._makelog.putto_file(outstr)
+            except:
+                outstr = "Some problem with project {} creation".format(newkey)
+                self._makelog.putto_console(outstr)
+                self._makelog.putto_errorlog(outstr, traceback.format_exc())
 
-        # new_issue = authed_jira.create_issue(project='PROJKEY1', summary='New issue from jira-python',
-        #                                     description='Look into this one', issuetype={'name': 'Bug'})
-        # print new_issue.fields.summary
-        # print authed_jira.projects()
+        # making users
+        for i in xrange(content_count['user']):
+            newname = names_base.getname_user()
+            try:
+                self._jira_connection.add_user(newname, "{}@mail.net".format(newname),\
+                                                fullname="Name {}{}".format(string.upper(newname[:1]), newname[1:]))
+                outstr = "User {} was successfully created".format(newname)
+                self._makelog.putto_console(outstr)
+                self._makelog.putto_file(outstr)
+            except:
+                outstr = "Some problem with user {} creation".format(newname)
+                self._makelog.putto_console(outstr)
+                self._makelog.putto_errorlog(outstr, traceback.format_exc())
 
-        # issue = authed_jira.issue('PROJKEY1-1')
-        # print issue.fields.summary
-        # print issue.fields.description
+        # getting all valid project keys
+        projects_keys = []
+        projects_all = self._jira_connection.projects()
+        for project in projects_all:
+            projects_keys.append(project.key)
 
-        # add_user(username, email, directoryId=1, password=None, fullname=None, notify=False, active=True, ignore_existing=False)
-        # create_project(key, name=None, assignee=None, type='Software', template_name=None)
-        # create_component(name, project, description=None, leadUserName=None, assigneeType=None, isAssigneeTypeValid=False)
-        # create_issue(fields=None, prefetch=True, **fieldargs)
-        # add_worklog(issue, timeSpent=None, timeSpentSeconds=None, adjustEstimate=None, newEstimate=None, reduceBy=None, comment=None, started=None, user=None)
+        # getting all valid user names
+        users_keys = []
+        users_all = self._jira_connection.search_users('%', maxResults=False, includeInactive=True)
+        for user in users_all:
+            users_keys.append(user.name)
+
+        # making components
+        for i in xrange(content_count['component']):
+            newname = names_base.getname_component()
+            try:
+                self._jira_connection.create_component(newname, random.choice(projects_keys), leadUserName=random.choice(users_keys))
+                outstr = "Component {} was successfully created".format(newname)
+                self._makelog.putto_console(outstr)
+                self._makelog.putto_file(outstr)
+            except:
+                outstr = "Some problem with component {} creation".format(newname)
+                self._makelog.putto_console(outstr)
+                self._makelog.putto_errorlog(outstr, traceback.format_exc())
+
+        # making issues
+        for i in xrange(content_count['issue']):
+            newname = names_base.getname_issue()
+            fields = {
+                        "project": {
+                                        "key": random.choice(projects_keys)
+                                    },
+                        "summary": "Here should be some random text summary for issue {}".format(newname),
+                        "description": "Here should be some random text description for issue {}".format(newname),
+                        "issuetype": {
+                                        "name": random.choice(("Bug", "Improvement", "Task", "Epic", "New Feature"))
+                                    },
+                        "assignee": {
+                                        "name": random.choice(users_keys)
+                                    },
+                        "timetracking": {
+                                            "originalEstimate": "{}w {}d {}h".format(random.randint(1, 3), random.randint(1, 4), random.randint(1, 7)),
+                                            "remainingEstimate": "{}d {}h".format(random.randint(1, 4), random.randint(1, 7))
+                                        }
+                    }
+            try:
+                self._jira_connection.create_issue(fields=fields)
+                outstr = "Issue {} was successfully created".format(newname)
+                self._makelog.putto_console(outstr)
+                self._makelog.putto_file(outstr)
+            except:
+                outstr = "Some problem with issue {} creation".format(newname)
+                self._makelog.putto_console(outstr)
+                self._makelog.putto_errorlog(outstr, traceback.format_exc())
+
+        # making worklogs
+        issues_all = self._jira_connection.search_issues('', maxResults=False)
+        for iss in issues_all:
+            try:
+                self._jira_connection.add_worklog(iss, timeSpent="{}h".format(random.randint(1, 3)), user=random.choice(users_keys),\
+                                                    comment="Here should be some random text about work on this issue")
+                outstr = "Worklog for issue {} was successfully created".format(iss.key)
+                self._makelog.putto_console(outstr)
+                self._makelog.putto_file(outstr)
+            except:
+                outstr = "Some problem with worklog creation for issue {}".format(iss.key)
+                self._makelog.putto_console(outstr)
+                self._makelog.putto_errorlog(outstr, traceback.format_exc())

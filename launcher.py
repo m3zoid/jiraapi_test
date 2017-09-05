@@ -6,14 +6,14 @@ def launch():
 
     def menu():
         # TODO: add class like 'key' for specify all valid strategies, use it instead constants
+        strategy = {'first': 1, 'second': 2, 'third': 3}
         strategy_cancel = 0
-        strategy_first = 1
-        strategy_second = 2
         enter_text = "Please specify your task:"\
                         "\n- put: {} for 'Generates report on the spent hours per programmer\n\t\tand per component'"\
                         "\n- put: {} for 'Generates and send e-mails for assainees with tasks\n\t\tthat do not have estimates or component field filled in'"\
+                        "\n- put: {} for 'Generates some random data'"\
                         "\n- put: {} for 'Cancel'\n> "\
-                        .format(strategy_first, strategy_second, strategy_cancel)
+                        .format(strategy['first'], strategy['second'], strategy['third'], strategy_cancel)
         wrong_text = "Invalid value, try again...\n"
         cancel_text = "Canceled"
 
@@ -23,9 +23,7 @@ def launch():
                 if nmbr == strategy_cancel:
                     print cancel_text
                     return False
-                elif nmbr == strategy_first or nmbr == strategy_second:
-                    return nmbr
-                elif nmbr == 3 or nmbr == 4:
+                elif nmbr in (strategy['first'], strategy['second'], strategy['third']):
                     return nmbr
                 else:
                     print wrong_text
