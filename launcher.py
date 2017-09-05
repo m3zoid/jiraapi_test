@@ -11,7 +11,7 @@ def launch():
         enter_text = "Please specify your task:"\
                         "\n- put: {} for 'Generates report on the spent hours per programmer\n\t\tand per component'"\
                         "\n- put: {} for 'Generates and send e-mails for assainees with tasks\n\t\tthat do not have estimates or component field filled in'"\
-                        "\n- put: {} for 'Generates some random data'"\
+                        "\n- put: {} for Add some entropy (generates some random data)"\
                         "\n- put: {} for 'Cancel'\n> "\
                         .format(strategy['first'], strategy['second'], strategy['third'], strategy_cancel)
         wrong_text = "Invalid value, try again...\n"

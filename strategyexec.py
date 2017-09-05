@@ -169,10 +169,11 @@ class Strategy:
         names_base = namebase.Namebase()
         maxlen_projname = 10
         content_count = {
-                            'project': 10,
-                            'user': 10,
-                            'component': 20,
-                            'issue': 100
+                            'project': 1,
+                            'user': 1,
+                            'component': 2,
+                            'issue': 10,
+                            'worklog': 20
                         }
 
         # making projects
@@ -182,11 +183,11 @@ class Strategy:
             newkey = string.join((parts[0][:(maxlen_projname - len(parts[1]))], parts[1]), '')
             try:
                 self._jira_connection.create_project(newkey, name=newname)
-                outstr = "Project {} was successfully created".format(newkey)
+                outstr = "Project {} was successfully created\n".format(newkey)
                 self._makelog.putto_console(outstr)
                 self._makelog.putto_file(outstr)
             except:
-                outstr = "Some problem with project {} creation".format(newkey)
+                outstr = "Some problem with project {} creation\n".format(newkey)
                 self._makelog.putto_console(outstr)
                 self._makelog.putto_errorlog(outstr, traceback.format_exc())
 
@@ -196,11 +197,11 @@ class Strategy:
             try:
                 self._jira_connection.add_user(newname, "{}@mail.net".format(newname),\
                                                 fullname="Name {}{}".format(string.upper(newname[:1]), newname[1:]))
-                outstr = "User {} was successfully created".format(newname)
+                outstr = "User {} was successfully created\n".format(newname)
                 self._makelog.putto_console(outstr)
                 self._makelog.putto_file(outstr)
             except:
-                outstr = "Some problem with user {} creation".format(newname)
+                outstr = "Some problem with user {} creation\n".format(newname)
                 self._makelog.putto_console(outstr)
                 self._makelog.putto_errorlog(outstr, traceback.format_exc())
 
@@ -221,11 +222,11 @@ class Strategy:
             newname = names_base.getname_component()
             try:
                 self._jira_connection.create_component(newname, random.choice(projects_keys), leadUserName=random.choice(users_keys))
-                outstr = "Component {} was successfully created".format(newname)
+                outstr = "Component {} was successfully created\n".format(newname)
                 self._makelog.putto_console(outstr)
                 self._makelog.putto_file(outstr)
             except:
-                outstr = "Some problem with component {} creation".format(newname)
+                outstr = "Some problem with component {} creation\n".format(newname)
                 self._makelog.putto_console(outstr)
                 self._makelog.putto_errorlog(outstr, traceback.format_exc())
 
@@ -251,24 +252,25 @@ class Strategy:
                     }
             try:
                 self._jira_connection.create_issue(fields=fields)
-                outstr = "Issue {} was successfully created".format(newname)
+                outstr = "Issue {} was successfully created\n".format(newname)
                 self._makelog.putto_console(outstr)
                 self._makelog.putto_file(outstr)
             except:
-                outstr = "Some problem with issue {} creation".format(newname)
+                outstr = "Some problem with issue {} creation\n".format(newname)
                 self._makelog.putto_console(outstr)
                 self._makelog.putto_errorlog(outstr, traceback.format_exc())
 
         # making worklogs
         issues_all = self._jira_connection.search_issues('', maxResults=False)
-        for iss in issues_all:
+        for i in xrange(content_count['worklog']):
+            iss = random.choice(issues_all)
             try:
                 self._jira_connection.add_worklog(iss, timeSpent="{}h".format(random.randint(1, 3)), user=random.choice(users_keys),\
                                                     comment="Here should be some random text about work on this issue")
-                outstr = "Worklog for issue {} was successfully created".format(iss.key)
+                outstr = "Worklog for issue {} was successfully created\n".format(iss.key)
                 self._makelog.putto_console(outstr)
                 self._makelog.putto_file(outstr)
             except:
-                outstr = "Some problem with worklog creation for issue {}".format(iss.key)
+                outstr = "Some problem with worklog creation for issue {}\n".format(iss.key)
                 self._makelog.putto_console(outstr)
                 self._makelog.putto_errorlog(outstr, traceback.format_exc())
